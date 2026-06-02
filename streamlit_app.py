@@ -1,5 +1,5 @@
 import streamlit as st
-from RAG import build_vector_db, get_context
+from rag import build_vector_db, get_context
 from llm import get_answer
 
 st.title("InsightForge - AI BI Assistant")
