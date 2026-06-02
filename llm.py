@@ -1,4 +1,8 @@
-import openai
+from openai import OpenAI
+import os
+
+# uses environment variable OPENAI_API_KEY automatically
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_answer(context, question):
     prompt = f"""
@@ -15,7 +19,7 @@ QUESTION:
 Give insights, trends, and recommendations.
 """
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}]
     )
