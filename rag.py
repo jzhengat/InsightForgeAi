@@ -1,12 +1,14 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_core.text_splitter import RecursiveCharacterTextSplitter
+from langchain.core.text_splitter import RecursiveCharacterTextSplitter
 
 import pandas as pd
 import os
 import streamlit as st
 
+# Langchain is framework that allows an LLM to interact with external tools and data and workflows
+# RAG is architectural technique that allows LLM access to private data that it was not trained on
 
 # LOAD CSV
 def load_csv():
@@ -55,18 +57,42 @@ def build_retriever():
 # RAG FUNCTION
 def search_context(query, retriever, csv_data):
 
-    csv_context = csv_data.describe(include="all").to_string()
+    query_lower = query.lower()
 
+    # -----------------------
+    # CSV ANALYSIS (structured data)
+    # -----------------------
+    csv_context = ""
+
+    if any(word in query_lower for word in [
+        "sales", "revenue", "profit", "customer", "region", "trend", "average", "total"
+    ]):
+        csv_context = csv_data.describe(include="all").to_string() + "\n\n"
+        csv_context += csv_data.head(10).to_string()
+
+    # -----------------------
+    # PDF RETRIEVAL (unstructured knowledge)
+    # -----------------------
     docs = retriever.invoke(query)
 
     pdf_context = "\n\n".join(
         [doc.page_content for doc in docs if doc.page_content]
     )
 
-    return f"""
-CSV CONTEXT:
+    # -----------------------
+    # SMART COMBINATION
+    # -----------------------
+    if csv_context and pdf_context:
+        return f"""
+CSV CONTEXT (Structured Data):
 {csv_context}
 
-PDF CONTEXT:
+PDF CONTEXT (Business Knowledge):
 {pdf_context}
 """
+
+    elif csv_context:
+        return f"CSV CONTEXT:\n{csv_context}"
+
+    else:
+        return f"PDF CONTEXT:\n{pdf_context}"
